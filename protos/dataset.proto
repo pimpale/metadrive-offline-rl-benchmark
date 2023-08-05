@@ -17,9 +17,9 @@ syntax = "proto2";
 
 package waymo.open_dataset;
 
-import "label.proto";
-import "map.proto";
-import "vector.proto";
+import "protos/label.proto";
+import "protos/map.proto";
+import "protos/vector.proto";
 
 message MatrixShape {
   // Dimensions for the Matrix messages defined below. Must not be empty.

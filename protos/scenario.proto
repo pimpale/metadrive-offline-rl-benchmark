@@ -19,8 +19,8 @@ syntax = "proto2";
 
 package waymo.open_dataset;
 
-import "compressed_lidar.proto";
-import "map.proto";
+import "protos/compressed_lidar.proto";
+import "protos/map.proto";
 
 message ObjectState {
   // Coordinates of the center of the object bounding box.
