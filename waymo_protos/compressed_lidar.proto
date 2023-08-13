@@ -19,7 +19,7 @@ syntax = "proto2";
 
 package waymo.open_dataset;
 
-import "protos/dataset.proto";
+import "waymo_protos/dataset.proto";
 
 // Range image is a 2d tensor. The first dimension (rows) represents pitch.
 // The second dimension represents yaw (columns).
