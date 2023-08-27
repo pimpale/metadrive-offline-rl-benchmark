@@ -29,15 +29,15 @@ class MetadriveModel(nn.Module):
 def metadrive_model_train_batch(
     mm: MetadriveModel,
     mm_optimizer: torch.optim.Optimizer,
-    s0_batch: list[State],
-    a_batch: list[Action],
-    s1_batch: list[State],
+    s0_tensor: torch.Tensor,
+    a_tensor: torch.Tensor,
+    s1_tensor: torch.Tensor
 ) -> float: 
     device = deviceof(mm)
-
-    s0_tensor = state_batch_to_tensor(s0_batch, device) 
-    a_tensor = action_batch_to_tensor(a_batch, device)
-    s1_tensor = state_batch_to_tensor(s1_batch, device)
+    
+    s0_tensor = s0_tensor.to(device)
+    a_tensor = a_tensor.to(device)
+    s1_tensor = s1_tensor.to(device)
 
     mm_optimizer.zero_grad()
     s1_pred_tensor = mm(s0_tensor, a_tensor)

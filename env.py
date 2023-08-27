@@ -37,7 +37,7 @@ def next_state(env: MetaDriveEnv, s: State, a: Action) -> State:
     env.vehicle.set_position(env.vehicle.position, height=0.49)
 
     # allow car to settle
-    for _ in range(5):
+    for _ in range(7):
         env.step([0,0])
 
     # set the initial state
