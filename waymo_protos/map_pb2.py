@@ -19,7 +19,6 @@ _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'waymo_protos.map_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
-
   DESCRIPTOR._options = None
   _LANECENTER.fields_by_name['entry_lanes']._options = None
   _LANECENTER.fields_by_name['entry_lanes']._serialized_options = b'\020\001'

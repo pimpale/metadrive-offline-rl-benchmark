@@ -20,7 +20,6 @@ _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'waymo_protos.compressed_lidar_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
-
   DESCRIPTOR._options = None
   _DELTAENCODEDDATA.fields_by_name['residual']._options = None
   _DELTAENCODEDDATA.fields_by_name['residual']._serialized_options = b'\020\001'
