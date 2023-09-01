@@ -27,7 +27,6 @@ class AgentTrack:
 
 @dataclass
 class LaneCenter:
-    kind: str
     polyline: npt.NDArray[np.float32] # in (N, 2``)
 
 @dataclass
@@ -42,8 +41,8 @@ class RoadEdge:
 
 @dataclass
 class StopSign:
-    lane: int
-    position: tuple[float, float]
+    lane: list[int]
+    position: npt.NDArray[np.float32] # in (2,)
 
 @dataclass
 class Crosswalk:
@@ -61,7 +60,11 @@ MapFeature = LaneCenter | RoadLine | RoadEdge | StopSign | Crosswalk | SpeedBump
 
 @dataclass
 class Scenario:
+    # the scenario id
+    scenario_id: str
+    # the index of the ego track
+    ego_track_index: int
     # all tracks must be the same length
-    agents: list[AgentTrack]
+    tracks: list[AgentTrack]
     # map features
-    features: dict[int, MapFeature]
+    map_features: dict[int, MapFeature]
