@@ -58,6 +58,15 @@ class Driveway:
 
 MapFeature = LaneCenter | RoadLine | RoadEdge | StopSign | Crosswalk | SpeedBump | Driveway
 
+
+@dataclass
+class TrafficLight:
+    lane: int
+    position: npt.NDArray[np.float32] # in (2,)
+    states: list[str]
+
+DynamicState = TrafficLight
+
 @dataclass
 class Scenario:
     # the scenario id
@@ -68,3 +77,5 @@ class Scenario:
     tracks: list[AgentTrack]
     # map features
     map_features: dict[int, MapFeature]
+    # dynamic state
+    dynamic_state: list[DynamicState]

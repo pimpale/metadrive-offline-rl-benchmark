@@ -5,21 +5,34 @@ import tensorflow as tf
 from waymo_protos import scenario_pb2
 from waymo_protos import map_pb2
 import numpy as np
+import numpy.typing as npt
 import typing
 import scenario
+from collections import defaultdict
+from dataclasses import dataclass
 
-
-TrafficSignal = {
-    0: 'LANE_STATE_UNKNOWN',
-    1: 'LANE_STATE_ARROW_STOP',
-    2: 'LANE_STATE_ARROW_CAUTION',
-    3: 'LANE_STATE_ARROW_GO',
-    4: 'LANE_STATE_STOP',
-    5: 'LANE_STATE_CAUTION',
-    6: 'LANE_STATE_GO',
-    7: 'LANE_STATE_FLASHING_STOP',
-    8: 'LANE_STATE_FLASHING_CAUTION'
-}
+def extract_traffic_signal_state(t: map_pb2.TrafficSignalLaneState.State) -> str:
+    match t:
+        case map_pb2.TrafficSignalLaneState.State.LANE_STATE_UNKNOWN:
+            return 'LANE_STATE_UNKNOWN'
+        case map_pb2.TrafficSignalLaneState.State.LANE_STATE_ARROW_STOP:
+            return 'LANE_STATE_ARROW_STOP'
+        case map_pb2.TrafficSignalLaneState.State.LANE_STATE_ARROW_CAUTION:
+            return 'LANE_STATE_ARROW_CAUTION'
+        case map_pb2.TrafficSignalLaneState.State.LANE_STATE_ARROW_GO:
+            return 'LANE_STATE_ARROW_GO'
+        case map_pb2.TrafficSignalLaneState.State.LANE_STATE_STOP:
+            return 'LANE_STATE_STOP'
+        case map_pb2.TrafficSignalLaneState.State.LANE_STATE_CAUTION:
+            return 'LANE_STATE_CAUTION'
+        case map_pb2.TrafficSignalLaneState.State.LANE_STATE_GO:
+            return 'LANE_STATE_GO'
+        case map_pb2.TrafficSignalLaneState.State.LANE_STATE_FLASHING_STOP:
+            return 'LANE_STATE_FLASHING_STOP'
+        case map_pb2.TrafficSignalLaneState.State.LANE_STATE_FLASHING_CAUTION:
+            return 'LANE_STATE_FLASHING_CAUTION'
+        case _:
+            raise ValueError(f'Unknown waymo traffic signal state: {t}')
 
 def extract_road_line_type(t: map_pb2.RoadLine.RoadLineType) -> str:
     match t:
@@ -85,6 +98,7 @@ def extract_scenario(s: scenario_pb2.Scenario) -> scenario.Scenario:
         ego_track_index=s.sdc_track_index,
         tracks=[extract_track(t) for t in s.tracks], 
         map_features=extract_map_features(s.map_features),
+        dynamic_state=extract_dynamic_state(s.dynamic_map_states)
     )
 
 def extract_track_state(state: scenario_pb2.ObjectState) -> scenario.AgentState:
@@ -174,4 +188,29 @@ def extract_map_features(map_features: typing.Iterable[map_pb2.MapFeature]) -> d
                 ret[feature.id] = extract_bump(feature.speed_bump)
             case 'driveway':
                 ret[feature.id] = extract_driveway(feature.driveway)
+    return ret
+
+def extract_dynamic_state(dynamic_state: typing.Iterable[scenario_pb2.DynamicMapState]) -> list[scenario.DynamicState]:
+    @dataclass
+    class TrafficLightState:
+        state: str
+        position: npt.NDArray[np.float32] # in (2,)
+
+    traffic_light_states: dict[int, list[TrafficLightState]] = defaultdict(list)
+    for states in dynamic_state:
+        for state in states.lane_states:
+            traffic_light_states[state.lane].append(TrafficLightState(
+                state=extract_traffic_signal_state(state.state),
+                position=np.array([state.stop_point.x, state.stop_point.y], dtype=np.float32),
+            ))
+
+    # factor out common position
+    ret = []
+    for lane, states in traffic_light_states.items():
+        ret.append(scenario.TrafficLight(
+            lane=lane,
+            position=states[0].position,
+            states=[s.state for s in states]
+        ))
+
     return ret
