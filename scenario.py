@@ -19,7 +19,7 @@ class AgentTrack:
     An agent is a vehicle or pedestrian
     Each state is sampled at 10Hz
     """
-    kind: str
+    object_type: str
     length: float
     width: float
     height: float

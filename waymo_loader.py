@@ -68,7 +68,7 @@ def extract_road_edge_type(t: map_pb2.RoadEdge.RoadEdgeType) -> str:
         case _:
             raise ValueError(f'Unknown waymo road edge type: {t}')
 
-def extract_agent_kind(t: scenario_pb2.Track.ObjectType) -> str:
+def extract_object_type(t: scenario_pb2.Track.ObjectType) -> str:
     match t:
         case scenario_pb2.Track.ObjectType.TYPE_UNSET:
             return 'UNSET'
@@ -81,7 +81,7 @@ def extract_agent_kind(t: scenario_pb2.Track.ObjectType) -> str:
         case scenario_pb2.Track.ObjectType.TYPE_OTHER:
             return 'OTHER'
         case _:
-            raise ValueError(f'Unknown waymo agent type: {t}')
+            raise ValueError(f'Unknown waymo object type: {t}')
 
 
 def parse_file(file_path: str) -> list[scenario.Scenario]:
@@ -120,7 +120,7 @@ def extract_track(track: scenario_pb2.Track) -> scenario.AgentTrack:
             heights.append(s.height)
      
     return scenario.AgentTrack(
-        kind=extract_agent_kind(track.object_type),
+        object_type=extract_object_type(track.object_type),
         length=np.median(lengths).item(),
         width=np.median(widths).item(),
         height=np.median(heights).item(),
