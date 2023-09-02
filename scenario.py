@@ -27,7 +27,7 @@ class AgentTrack:
 
 @dataclass
 class LaneCenter:
-    polyline: npt.NDArray[np.float32] # in (N, 2``)
+    polyline: npt.NDArray[np.float32] # in (N, 2)
 
 @dataclass
 class RoadLine:
@@ -46,15 +46,15 @@ class StopSign:
 
 @dataclass
 class Crosswalk:
-    polygon: npt.NDArray[np.float32]
+    polygon: npt.NDArray[np.float32] # in (N, 2)
 
 @dataclass
 class SpeedBump:
-    polygon: npt.NDArray[np.float32]
+    polygon: npt.NDArray[np.float32] # in (N, 2)
 
 @dataclass
 class Driveway:
-    polygon: npt.NDArray[np.float32]
+    polygon: npt.NDArray[np.float32] # in (N, 2)
 
 MapFeature = LaneCenter | RoadLine | RoadEdge | StopSign | Crosswalk | SpeedBump | Driveway
 

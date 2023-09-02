@@ -9,38 +9,38 @@ def convert_2D_points(t: np.ndarray) -> np.ndarray:
 
 def convert_map_feature(t: scenario.MapFeature, id_val: int) -> dict:
     match t:
-        case scenario.LaneCenter:
+        case scenario.LaneCenter():
             return {
                 "type": MetaDriveType.LANE_SURFACE_STREET,
                 "polyline": convert_2D_points(t.polyline),
             }
-        case scenario.RoadLine:
+        case scenario.RoadLine():
             return {
                 "type": t.kind,
                 "polyline": convert_2D_points(t.polyline),
             }
-        case scenario.RoadEdge:
+        case scenario.RoadEdge():
             return {
                 "type": t.kind,
                 "polyline": convert_2D_points(t.polyline),
             }
-        case scenario.StopSign:
+        case scenario.StopSign():
             return {
                 "type": MetaDriveType.STOP_SIGN,
                 "position": np.append(t.position, 0),
                 "lane": t.lane,
             }
-        case scenario.Crosswalk:
+        case scenario.Crosswalk():
             return {
                 "type": MetaDriveType.CROSSWALK,
                 "polygon": convert_2D_points(t.polygon),
             }
-        case scenario.SpeedBump:
+        case scenario.SpeedBump():
             return {
                 "type": MetaDriveType.SPEED_BUMP,
                 "polygon": convert_2D_points(t.polygon),
             }
-        case scenario.Driveway:
+        case scenario.Driveway():
             return {
                 "type": MetaDriveType.DRIVEWAY,
                 "polygon": convert_2D_points(t.polygon),
