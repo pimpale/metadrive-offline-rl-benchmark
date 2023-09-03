@@ -11,6 +11,8 @@ import scenario
 from collections import defaultdict
 from dataclasses import dataclass
 
+from scipy.ndimage import gaussian_filter1d
+
 def extract_traffic_signal_state(t: map_pb2.TrafficSignalLaneState.State) -> str:
     match t:
         case map_pb2.TrafficSignalLaneState.State.LANE_STATE_UNKNOWN:
@@ -83,23 +85,6 @@ def extract_object_type(t: scenario_pb2.Track.ObjectType) -> str:
         case _:
             raise ValueError(f'Unknown waymo object type: {t}')
 
-
-def parse_file(file_path: str) -> list[scenario.Scenario]:
-    scenarios = []
-    scenario_proto = scenario_pb2.Scenario()
-    for data in tf.data.TFRecordDataset(file_path, compression_type="").as_numpy_iterator():
-        scenario_proto.ParseFromString(bytes(data))
-        scenarios.append(extract_scenario(scenario_proto))
-    return scenarios
-
-def extract_scenario(s: scenario_pb2.Scenario) -> scenario.Scenario:
-    return scenario.Scenario(
-        scenario_id=s.scenario_id,
-        ego_track_index=s.sdc_track_index,
-        tracks=[extract_track(t) for t in s.tracks], 
-        map_features=extract_map_features(s.map_features),
-        dynamic_state=extract_dynamic_state(s.dynamic_map_states)
-    )
 
 def extract_track_state(state: scenario_pb2.ObjectState) -> scenario.AgentState:
     return scenario.AgentState(
@@ -191,26 +176,67 @@ def extract_map_features(map_features: typing.Iterable[map_pb2.MapFeature]) -> d
     return ret
 
 def extract_dynamic_state(dynamic_state: typing.Iterable[scenario_pb2.DynamicMapState]) -> list[scenario.DynamicState]:
-    @dataclass
-    class TrafficLightState:
-        state: str
-        position: npt.NDArray[np.float32] # in (2,)
+    track_length = len(list(dynamic_state))
+    ret: dict[int, scenario.TrafficLight] = defaultdict(
+        lambda: scenario.TrafficLight(
+            lane=0,
+            states=['LANE_STATE_UNKNOWN' for _ in range(track_length)],
+            position=np.array([0, 0], dtype=np.float32),
+        )
+    )
+    for i, dynamic_map_state in enumerate(dynamic_state):
+        for light_state in dynamic_map_state.lane_states:
+            ret[light_state.lane].lane = light_state.lane
+            ret[light_state.lane].states[i] = extract_traffic_signal_state(light_state.state)
+            ret[light_state.lane].position = (
+                np.array([light_state.stop_point.x, light_state.stop_point.y], dtype=np.float32)
+            )
 
-    traffic_light_states: dict[int, list[TrafficLightState]] = defaultdict(list)
-    for states in dynamic_state:
-        for state in states.lane_states:
-            traffic_light_states[state.lane].append(TrafficLightState(
-                state=extract_traffic_signal_state(state.state),
-                position=np.array([state.stop_point.x, state.stop_point.y], dtype=np.float32),
-            ))
+    return list(ret.values())
 
-    # factor out common position
-    ret = []
-    for lane, states in traffic_light_states.items():
-        ret.append(scenario.TrafficLight(
-            lane=lane,
-            position=states[0].position,
-            states=[s.state for s in states]
-        ))
+def extract_scenarios_file(file_path: str) -> list[scenario.Scenario]:
+    scenarios = []
+    scenario_proto = scenario_pb2.Scenario()
+    for data in tf.data.TFRecordDataset(file_path, compression_type="").as_numpy_iterator():
+        scenario_proto.ParseFromString(bytes(data))
+        scenarios.append(extract_scenario(scenario_proto))
+    return scenarios
 
-    return ret
+def extract_scenario(s: scenario_pb2.Scenario) -> scenario.Scenario:
+    return scenario.Scenario(
+        scenario_id=s.scenario_id,
+        ego_track_index=s.sdc_track_index,
+        tracks=[extract_track(t) for t in s.tracks], 
+        map_features=extract_map_features(s.map_features),
+        dynamic_state=extract_dynamic_state(s.dynamic_map_states)
+    )
+
+
+from env import State
+
+
+def extract_trajectory(scenario: scenario_pb2.Scenario) -> list[State]:
+    vx = np.array([state.velocity_x for state in scenario.tracks[scenario.sdc_track_index].states if state.valid], dtype=np.float32)
+    vy = np.array([state.velocity_y for state in scenario.tracks[scenario.sdc_track_index].states if state.valid], dtype=np.float32)
+    heading = np.array([state.heading for state in scenario.tracks[scenario.sdc_track_index].states if state.valid], dtype=np.float32)
+    
+    # filter
+    vx = gaussian_filter1d(vx, sigma=3)
+    vy = gaussian_filter1d(vy, sigma=3)
+    heading = gaussian_filter1d(heading, sigma=3)
+    
+    return [
+        State(
+            heading=heading,
+            velocity=np.array([vx, vy], dtype=np.float32),
+        )
+        for vx, vy, heading in zip(vx, vy, heading)
+    ]
+
+def extract_trajectory_file(file_path: str) -> list[list[State]]:
+    trajectories = []
+    scenario_proto = scenario_pb2.Scenario()
+    for data in tf.data.TFRecordDataset(file_path, compression_type="").as_numpy_iterator():
+        scenario_proto.ParseFromString(bytes(data))
+        trajectories.append(extract_trajectory(scenario_proto))
+    return trajectories

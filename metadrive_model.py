@@ -12,10 +12,11 @@ class MetadriveModel(nn.Module):
         super().__init__()
         # input shape: (batch_size, 3) + (batch_size, 2) = (batch_size, 5)
         # output shape: (batch_size, 3)
-        self.fc1 = nn.Linear(6, 768)
-        self.fc2 = nn.Linear(768, 768)
-        self.fc3 = nn.Linear(768, 768)
-        self.fc4 = nn.Linear(768, 4)
+        self.fc1 = nn.Linear(6, 2048)
+        self.fc2 = nn.Linear(2048, 1024)
+        self.fc3 = nn.Linear(1024, 768)
+        self.fc4 = nn.Linear(768, 768)
+        self.fc5 = nn.Linear(768, 4)
     
     def forward(self, states: torch.Tensor, actions: torch.Tensor):
         # clip actions to be between -1 and 1
@@ -24,7 +25,8 @@ class MetadriveModel(nn.Module):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = F.relu(self.fc3(x))
-        x = self.fc4(x) # no activation function on the last layer
+        x = F.relu(self.fc4(x))
+        x = self.fc5(x) # no activation function on the last layer
         x = states + x
         return x
 

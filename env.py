@@ -12,7 +12,7 @@ import torch.nn.functional as F
 @dataclass
 class State:
     heading: float
-    velocity: npt.NDArray[np.float64]
+    velocity: npt.NDArray[np.float32]
 
 
 Observation: typing.TypeAlias = tuple[State, State]
