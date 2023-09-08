@@ -6,7 +6,7 @@ from scipy.spatial.transform import Rotation
 from scipy.spatial.transform import Slerp
 from scipy.ndimage import gaussian_filter1d
 
-from env import State
+from utils.env import State
 
 
 def read_json(path: str) -> list:

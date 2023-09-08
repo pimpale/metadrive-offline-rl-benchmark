@@ -17,7 +17,7 @@ syntax = "proto2";
 
 package waymo.open_dataset;
 
-import "waymo_protos/keypoint.proto";
+import "utils/waymo_protos/keypoint.proto";
 
 message Label {
   // Upright box, zero pitch and roll.

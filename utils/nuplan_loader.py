@@ -4,7 +4,7 @@ from scipy.spatial.transform import Rotation
 from scipy.spatial.transform import Slerp
 from scipy.ndimage import gaussian_filter1d
 
-from env import State
+from utils.env import State
 
 
 def parse_file(file_path: str) -> list[list[State]]:

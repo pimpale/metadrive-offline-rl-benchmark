@@ -1,9 +1,8 @@
 import numpy as np
-import scenario
 from metadrive.scenario import ScenarioDescription as SD
 from metadrive.type import MetaDriveType
 
-from env import State
+import utils.scenario as scenario
 
 def convert_2D_points(t: np.ndarray) -> np.ndarray:
     # convert from (2, N) to (3, N)

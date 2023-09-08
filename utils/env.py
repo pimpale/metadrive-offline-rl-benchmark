@@ -1,4 +1,5 @@
 import typing
+from serde import serde
 import dataclasses
 from dataclasses import dataclass
 import numpy as np
@@ -10,27 +11,30 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+@serde
 @dataclass
 class State:
     heading: float
     velocity: tuple[float, float]
 
+@serde
 @dataclass
 class Action:
     steer: float
     throttle: float
 
+@serde
 @dataclass
 class Transition:
     state: State
     action: Action
     next_state: State
 
-    @staticmethod
-    def from_json(data: dict):
-        return Transition(State(**data['state']), Action(steer=data['action'][0], throttle=data['action'][1]), State(**data['next_state']))
-
-Observation: typing.TypeAlias = tuple[State, State]
+@serde
+@dataclass
+class Observation:
+    state: State
+    next_state: State
 
 def normalize_angle(angle: float) -> float:
     """
@@ -58,7 +62,7 @@ def next_state(env: MetaDriveEnv, s: State, a: Action) -> State:
     env.vehicle.set_heading_theta(s.heading)
     
     # run the simulator
-    env.step(a)
+    env.step([a.steer, a.throttle])
 
     # get the new state
     s_prime = get_metadrive_state(env)
@@ -91,7 +95,9 @@ def obs_batch_to_tensor(obs: list[Observation], device: torch.device) -> torch.T
 
     observations = []
 
-    for st0, st1 in obs:
+    for o in obs:
+        st0 = o.state
+        st1 = o.next_state
         observations.append(np.array([
             [st0.velocity[0], st1.velocity[0]], 
             [st0.velocity[1], st1.velocity[1]],
@@ -100,17 +106,3 @@ def obs_batch_to_tensor(obs: list[Observation], device: torch.device) -> torch.T
         ]))
 
     return torch.tensor(np.stack(observations), dtype=torch.float32, device=device)
-
-
-def transition_batch_to_json(transition: list[Transition]) -> list[dict]:
-    """
-    Convert a batch of transitions to a list of json objects
-    """
-    return [dataclasses.asdict(t) for t in transition]
-
-
-def transition_json_to_batch(data: list[dict]) -> list[Transition]:
-    """
-    Convert a list of json objects to a batch of transitions
-    """
-    return [Transition.from_json(d) for d in data]

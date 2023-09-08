@@ -10,8 +10,8 @@ from metadrive.component.vehicle_navigation_module.trajectory_navigation import 
 from metadrive.scenario import ScenarioDescription as SD
 from metadrive.policy.replay_policy import ReplayEgoCarPolicy
 
-import scenario
-from scenario_converter import convert_scenario
+import utils.scenario as scenario
+from utils.scenario_converter import convert_scenario
 
 
 class InMemoryScenarioDataManager(BaseManager):

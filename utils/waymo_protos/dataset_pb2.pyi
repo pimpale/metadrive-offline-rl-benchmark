@@ -1,6 +1,6 @@
-from waymo_protos import label_pb2 as _label_pb2
-from waymo_protos import map_pb2 as _map_pb2
-from waymo_protos import vector_pb2 as _vector_pb2
+from utils.waymo_protos import label_pb2 as _label_pb2
+from utils.waymo_protos import map_pb2 as _map_pb2
+from utils.waymo_protos import vector_pb2 as _vector_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 from google.protobuf.internal import python_message as _python_message

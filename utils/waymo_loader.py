@@ -2,16 +2,16 @@ import os
 # tensorflow don't allocate all gpu memory right away
 os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 import tensorflow as tf
-from waymo_protos import scenario_pb2
-from waymo_protos import map_pb2
 import numpy as np
 import numpy.typing as npt
 import typing
-import scenario
+import utils.scenario as scenario
 from collections import defaultdict
-from dataclasses import dataclass
-
 from scipy.ndimage import gaussian_filter1d
+
+from utils.env import State
+from utils.waymo_protos import scenario_pb2
+from utils.waymo_protos import map_pb2
 
 def extract_traffic_signal_state(t: map_pb2.TrafficSignalLaneState.State) -> str:
     match t:
@@ -211,10 +211,6 @@ def extract_scenario(s: scenario_pb2.Scenario) -> scenario.Scenario:
         dynamic_state=extract_dynamic_state(s.dynamic_map_states)
     )
 
-
-from env import State
-
-
 def extract_trajectory(scenario: scenario_pb2.Scenario) -> list[State]:
     vx = np.array([state.velocity_x for state in scenario.tracks[scenario.sdc_track_index].states if state.valid], dtype=np.float32)
     vy = np.array([state.velocity_y for state in scenario.tracks[scenario.sdc_track_index].states if state.valid], dtype=np.float32)
@@ -228,7 +224,7 @@ def extract_trajectory(scenario: scenario_pb2.Scenario) -> list[State]:
     return [
         State(
             heading=heading,
-            velocity=np.array([vx, vy], dtype=np.float32),
+            velocity=(vx, vy)
         )
         for vx, vy, heading in zip(vx, vy, heading)
     ]
