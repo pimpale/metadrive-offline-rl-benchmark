@@ -9,7 +9,7 @@ import utils.scenario as scenario
 from collections import defaultdict
 from scipy.ndimage import gaussian_filter1d
 
-from utils.env import State
+from utils.env import State, normalize_angle
 from utils.waymo_protos import scenario_pb2
 from utils.waymo_protos import map_pb2
 
@@ -219,7 +219,10 @@ def extract_trajectory(scenario: scenario_pb2.Scenario) -> list[State]:
     # filter
     vx = gaussian_filter1d(vx, sigma=3)
     vy = gaussian_filter1d(vy, sigma=3)
-    heading = gaussian_filter1d(heading, sigma=3)
+    
+    # reconstruct heading before smoothing
+    heading_reconstructed = np.cumsum(normalize_angle(np.diff(heading, prepend=0)))
+    heading = normalize_angle(gaussian_filter1d(heading_reconstructed, sigma=3))
     
     return [
         State(

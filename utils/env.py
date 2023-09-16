@@ -10,6 +10,7 @@ import gymnasium as gym
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from typing import TypeVar
 
 @serde
 @dataclass
@@ -36,7 +37,9 @@ class Observation:
     state: State
     next_state: State
 
-def normalize_angle(angle: float) -> float:
+
+ScalarOrArray = TypeVar('ScalarOrArray', float, np.ndarray)
+def normalize_angle(angle: ScalarOrArray) -> ScalarOrArray:
     """
     Normalize the angle to [-pi, pi)
     """
