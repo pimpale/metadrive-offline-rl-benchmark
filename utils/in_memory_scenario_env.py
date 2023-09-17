@@ -9,7 +9,7 @@ from metadrive.manager.scenario_traffic_manager import ScenarioTrafficManager
 from metadrive.component.vehicle_navigation_module.trajectory_navigation import TrajectoryNavigation
 from metadrive.scenario import ScenarioDescription as SD
 from metadrive.policy.replay_policy import ReplayEgoCarPolicy
-
+from typing import Optional
 import utils.scenario as scenario
 from utils.scenario_converter import convert_scenario
 
@@ -57,9 +57,11 @@ class InMemoryScenarioEnv(BaseEnv):
         })
         return config
 
-    def __init__(self, config, s: scenario.Scenario):
+
+    s: Optional[scenario.Scenario] = None
+
+    def __init__(self, config):
         super().__init__(config)
-        self.scenario = s
 
     def done_function(self, vehicle_id: str):
         return False, {}
@@ -73,9 +75,14 @@ class InMemoryScenarioEnv(BaseEnv):
     def _get_observations(self):
         return {DEFAULT_AGENT: self.get_single_observation()}
     
+
+    def set_scenario(self, s: scenario.Scenario):
+        self.s = s
+
     def setup_engine(self):
+        assert self.s is not None, "Please set scenario first!"
         self.engine.register_manager("agent_manager", self.agent_manager)
         self.engine.register_manager("map_manager", ScenarioMapManager())
         self.engine.register_manager("scenario_traffic_manager", ScenarioTrafficManager())
         self.engine.register_manager("scenario_light_manager", ScenarioLightManager()) 
-        self.engine.register_manager("data_manager", InMemoryScenarioDataManager(self.scenario))
+        self.engine.register_manager("data_manager", InMemoryScenarioDataManager(self.s))

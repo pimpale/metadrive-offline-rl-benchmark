@@ -89,23 +89,43 @@ def action_batch_to_tensor(actions: list[Action], device: torch.device) -> torch
     """
     Reshape the action from Action to a tensor of shape (batch_size, 2)
     """
-    return torch.tensor(np.array([(a.steer, a.throttle) for a in actions]), dtype=torch.float32, device=device)
+    return torch.tensor([(a.steer, a.throttle) for a in actions], dtype=torch.float32, device=device)
 
 def obs_batch_to_tensor(obs: list[Observation], device: torch.device) -> torch.Tensor:
     """
     Reshape the observation from tuple[State, State] to a tensor of shape (batch_size, 4, 2)
     """
 
-    observations = []
+    observations: list[list[list[float]]] = []
 
     for o in obs:
         st0 = o.state
         st1 = o.next_state
-        observations.append(np.array([
+        observations.append([
             [st0.velocity[0], st1.velocity[0]], 
             [st0.velocity[1], st1.velocity[1]],
             [np.cos(st0.heading), np.cos(st1.heading)],
             [np.sin(st0.heading), np.sin(st1.heading)],
-        ]))
+        ])
 
-    return torch.tensor(np.stack(observations), dtype=torch.float32, device=device)
+    return torch.tensor(observations, dtype=torch.float32, device=device)
+
+
+def obs_batch_to_tensor_rotated(obs: list[Observation], device: torch.device) -> torch.Tensor:
+    """
+    Reshape the observation from tuple[State, State] to a tensor of shape (batch_size, 4, 2)
+    """
+
+    observations: list[list[list[float]]] = []
+
+    for o in obs:
+        st0 = o.state
+        st1 = o.next_state
+        observations.append([
+            [st0.velocity[0], st1.velocity[0]], 
+            [st0.velocity[1], st1.velocity[1]],
+            [np.cos(st0.heading), np.cos(st1.heading)],
+            [np.sin(st0.heading), np.sin(st1.heading)],
+        ])
+
+    return torch.tensor(observations, dtype=torch.float32, device=device)

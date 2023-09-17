@@ -13,8 +13,8 @@ class TransitionModel(nn.Module):
         self.fc1 = nn.Linear(6, 2048)
         self.fc2 = nn.Linear(2048, 1024)
         self.fc3 = nn.Linear(1024, 768)
-        self.fc4 = nn.Linear(768, 768)
-        self.fc5 = nn.Linear(768, 4)
+        self.fc4 = nn.Linear(768, 512)
+        self.fc5 = nn.Linear(512, 4)
     
     def forward(self, states: torch.Tensor, actions: torch.Tensor):
         # clip actions to be between -1 and 1
