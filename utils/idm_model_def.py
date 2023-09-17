@@ -3,7 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from utils.model import deviceof
-from utils.transition_model_def import TransitionModel
 
 class InverseDynamicsModel(nn.Module):
     def __init__(self):
@@ -13,9 +12,13 @@ class InverseDynamicsModel(nn.Module):
 
         self.conv1 = nn.Conv1d(4, 2048, 2)
         self.fc1 = nn.Linear(2048, 1536)
+        self.dropout1 = nn.Dropout(0.5)
         self.fc2 = nn.Linear(1536, 1024)
+        self.dropout2 = nn.Dropout(0.5)
         self.fc3 = nn.Linear(1024, 768)
+        self.dropout3 = nn.Dropout(0.5)
         self.fc4 = nn.Linear(768, 512)
+        self.dropout4 = nn.Dropout(0.5)
         self.fc5 = nn.Linear(512, 2)
     
 
@@ -24,9 +27,13 @@ class InverseDynamicsModel(nn.Module):
         x = F.relu(self.conv1(x))
         x = torch.flatten(x, 1)        
         x = F.relu(self.fc1(x))
+        x = self.dropout1(x)
         x = F.relu(self.fc2(x))
+        x = self.dropout2(x)
         x = F.relu(self.fc3(x))
+        x = self.dropout3(x)
         x = F.relu(self.fc4(x))
+        x = self.dropout4(x)
         x = self.fc5(x)
         x = torch.clamp(x, -1, 1)
         return x
@@ -53,35 +60,6 @@ class InverseDynamicsModel(nn.Module):
 
         x_ego_frame = torch.stack([torch.cat([v0_rot, d0_rot], 1), torch.cat([v1_rot, d1_rot], 1)], 2)
         return self.forward_ego_frame(x_ego_frame)
-
-
-def idm_train_batch(
-        tm: TransitionModel,
-        idm: InverseDynamicsModel,
-        idm_optimizer: torch.optim.Optimizer,
-        obs_tensor: torch.Tensor,
-        s0_tensor: torch.Tensor,
-        s1_tensor: torch.Tensor,
-) -> float:
-    device = deviceof(tm)
-    assert deviceof(idm) == device
-
-    obs_tensor = obs_tensor.to(device)
-    s0_tensor = s0_tensor.to(device)
-    s1_tensor = s1_tensor.to(device)
-
-    idm_optimizer.zero_grad()
-
-    pred_action = idm(obs_tensor)
-    pred_s1 = tm(s0_tensor, pred_action)
-
-    loss = F.mse_loss(pred_s1, s1_tensor)
-    loss.backward()
-
-    idm_optimizer.step()
-
-    return float(loss.item())
-
 
 def idm_train_direct_batch(
         idm: InverseDynamicsModel,

@@ -210,32 +210,3 @@ def extract_scenario(s: scenario_pb2.Scenario) -> scenario.Scenario:
         map_features=extract_map_features(s.map_features),
         dynamic_state=extract_dynamic_state(s.dynamic_map_states)
     )
-
-def extract_trajectory(scenario: scenario_pb2.Scenario) -> list[State]:
-    vx = np.array([state.velocity_x for state in scenario.tracks[scenario.sdc_track_index].states if state.valid], dtype=np.float32)
-    vy = np.array([state.velocity_y for state in scenario.tracks[scenario.sdc_track_index].states if state.valid], dtype=np.float32)
-    heading = np.array([state.heading for state in scenario.tracks[scenario.sdc_track_index].states if state.valid], dtype=np.float32)
-    
-    # filter
-    vx = gaussian_filter1d(vx, sigma=3)
-    vy = gaussian_filter1d(vy, sigma=3)
-    
-    # reconstruct heading before smoothing
-    heading_reconstructed = np.cumsum(normalize_angle(np.diff(heading, prepend=0)))
-    heading = normalize_angle(gaussian_filter1d(heading_reconstructed, sigma=3))
-    
-    return [
-        State(
-            heading=heading,
-            velocity=(vx, vy)
-        )
-        for vx, vy, heading in zip(vx, vy, heading)
-    ]
-
-def extract_trajectory_file(file_path: str) -> list[list[State]]:
-    trajectories = []
-    scenario_proto = scenario_pb2.Scenario()
-    for data in tf.data.TFRecordDataset(file_path, compression_type="").as_numpy_iterator():
-        scenario_proto.ParseFromString(bytes(data))
-        trajectories.append(extract_trajectory(scenario_proto))
-    return trajectories

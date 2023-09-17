@@ -3,6 +3,8 @@ from metadrive.scenario import ScenarioDescription as SD
 from metadrive.type import MetaDriveType
 
 import utils.scenario as scenario
+from utils.env import State, normalize_angle
+from scipy.ndimage import gaussian_filter1d
 
 def convert_2D_points(t: np.ndarray) -> np.ndarray:
     # convert from (2, N) to (3, N)
@@ -108,3 +110,25 @@ def convert_scenario(s: scenario.Scenario):
     md_scenario[SD.METADATA]["track_length"] = track_length
 
     return md_scenario
+
+
+def extract_trajectory(track: scenario.AgentTrack) -> list[State]:
+    vx = np.array([state.velocity[0] for state in track.states if state.valid], dtype=np.float32)
+    vy = np.array([state.velocity[1] for state in track.states if state.valid], dtype=np.float32)
+    heading = np.array([state.heading for state in track.states if state.valid], dtype=np.float32)
+    
+    # filter
+    vx = gaussian_filter1d(vx, sigma=3)
+    vy = gaussian_filter1d(vy, sigma=3)
+    
+    # reconstruct heading before smoothing
+    heading_reconstructed = np.cumsum(normalize_angle(np.diff(heading, prepend=0)))
+    heading = normalize_angle(gaussian_filter1d(heading_reconstructed, sigma=3))
+    
+    return [
+        State(
+            heading=heading,
+            velocity=(vx, vy)
+        )
+        for vx, vy, heading in zip(vx, vy, heading)
+    ]
