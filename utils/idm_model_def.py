@@ -12,13 +12,9 @@ class InverseDynamicsModel(nn.Module):
 
         self.conv1 = nn.Conv1d(4, 2048, 2)
         self.fc1 = nn.Linear(2048, 1536)
-        self.dropout1 = nn.Dropout(0.5)
         self.fc2 = nn.Linear(1536, 1024)
-        self.dropout2 = nn.Dropout(0.5)
         self.fc3 = nn.Linear(1024, 768)
-        self.dropout3 = nn.Dropout(0.5)
         self.fc4 = nn.Linear(768, 512)
-        self.dropout4 = nn.Dropout(0.5)
         self.fc5 = nn.Linear(512, 2)
     
 
@@ -27,13 +23,9 @@ class InverseDynamicsModel(nn.Module):
         x = F.relu(self.conv1(x))
         x = torch.flatten(x, 1)        
         x = F.relu(self.fc1(x))
-        x = self.dropout1(x)
         x = F.relu(self.fc2(x))
-        x = self.dropout2(x)
         x = F.relu(self.fc3(x))
-        x = self.dropout3(x)
         x = F.relu(self.fc4(x))
-        x = self.dropout4(x)
         x = self.fc5(x)
         x = torch.clamp(x, -1, 1)
         return x
