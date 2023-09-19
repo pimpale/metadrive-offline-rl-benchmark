@@ -86,6 +86,6 @@ class Scenario:
     # all tracks must be the same length
     tracks: list[AgentTrack]
     # map features
-    map_features: dict[int, MapFeature]
+    map_features: list[MapFeature]
     # dynamic state
     dynamic_state: list[DynamicState]

@@ -155,8 +155,8 @@ def extract_driveway(f: map_pb2.Driveway) -> scenario.Driveway:
         polygon=extract_poly(f.polygon)
     )
 
-def extract_map_features(map_features: typing.Iterable[map_pb2.MapFeature]) -> dict[int, scenario.MapFeature]:
-    ret = {}
+def extract_map_features(map_features: typing.Iterable[map_pb2.MapFeature]) -> list[scenario.MapFeature]:
+    ret:dict[int, scenario.MapFeature] = {}
     for feature in map_features:
         match feature.WhichOneof('feature_data'):
             case 'lane':
@@ -173,7 +173,8 @@ def extract_map_features(map_features: typing.Iterable[map_pb2.MapFeature]) -> d
                 ret[feature.id] = extract_bump(feature.speed_bump)
             case 'driveway':
                 ret[feature.id] = extract_driveway(feature.driveway)
-    return ret
+    
+    return [v for _, v in sorted(ret.items(), key=lambda x: x[0])]
 
 def extract_dynamic_state(dynamic_state: typing.Iterable[scenario_pb2.DynamicMapState]) -> list[scenario.DynamicState]:
     track_length = len(list(dynamic_state))

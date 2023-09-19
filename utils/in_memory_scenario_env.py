@@ -9,6 +9,7 @@ from metadrive.manager.scenario_traffic_manager import ScenarioTrafficManager
 from metadrive.component.vehicle_navigation_module.trajectory_navigation import TrajectoryNavigation
 from metadrive.scenario import ScenarioDescription as SD
 from metadrive.policy.replay_policy import ReplayEgoCarPolicy
+from metadrive.obs.top_down_obs_multi_channel import TopDownMultiChannel
 from typing import Optional
 import utils.scenario as scenario
 from utils.scenario_converter import convert_scenario
@@ -86,3 +87,33 @@ class InMemoryScenarioEnv(BaseEnv):
         self.engine.register_manager("scenario_traffic_manager", ScenarioTrafficManager())
         self.engine.register_manager("scenario_light_manager", ScenarioLightManager()) 
         self.engine.register_manager("data_manager", InMemoryScenarioDataManager(self.s))
+
+
+class TopDownInMemoryScenarioEnv(InMemoryScenarioEnv):
+    @classmethod
+    def default_config(cls) -> Config:
+        config = super().default_config()
+        # config["vehicle_config"]["lidar"].update({"num_lasers": 0, "distance": 0})  # Remove lidar
+        config.update(
+            {
+                "frame_skip": 5,
+                "frame_stack": 3,
+                "post_stack": 5,
+                "rgb_clip": True,
+                "resolution_size": 84,
+                "distance": 30
+            }
+        )
+        return config
+
+    def get_single_observation(self, _=None):
+        return TopDownMultiChannel(
+            self.config["vehicle_config"],
+            onscreen=self.config["use_render"],
+            clip_rgb=self.config["rgb_clip"],
+            frame_stack=self.config["frame_stack"],
+            post_stack=self.config["post_stack"],
+            frame_skip=self.config["frame_skip"],
+            resolution=(self.config["resolution_size"], self.config["resolution_size"]),
+            max_distance=self.config["distance"]
+        )
