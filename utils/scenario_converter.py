@@ -97,7 +97,7 @@ def convert_scenario(s: scenario.Scenario):
     md_scenario[SD.LENGTH] = track_length
     md_scenario[SD.TRACKS] = { str(i): convert_track(t, str(i), track_length) for i, t in enumerate(s.tracks)} 
     md_scenario[SD.DYNAMIC_MAP_STATES] = { str(s.lane): convert_dynamic_map_state(s, str(s.lane), track_length) for s in s.dynamic_state }
-    md_scenario[SD.MAP_FEATURES] = { str(k): convert_map_feature(v, k) for k, v in s.map_features.items()}
+    md_scenario[SD.MAP_FEATURES] = { str(k): convert_map_feature(v, str(k)) for k, v in enumerate(s.map_features)}
     md_scenario[SD.METADATA] = {}
     md_scenario[SD.METADATA][SD.ID] = md_scenario[SD.ID]
     md_scenario[SD.METADATA][SD.COORDINATE] = MetaDriveType.COORDINATE_WAYMO

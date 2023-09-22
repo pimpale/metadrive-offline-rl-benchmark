@@ -32,6 +32,7 @@ class InMemoryScenarioEnv(BaseEnv):
             "start_seed": 0,
             "num_scenarios": 1,
             "start_scenario_index": 0,
+            "top_down_show_real_size": True,
             "no_map": False,
             "store_map": False,
             "need_lane_localization": True,

@@ -155,28 +155,42 @@ def extract_driveway(f: map_pb2.Driveway) -> scenario.Driveway:
         polygon=extract_poly(f.polygon)
     )
 
-def extract_map_features(map_features: typing.Iterable[map_pb2.MapFeature]) -> list[scenario.MapFeature]:
-    ret:dict[int, scenario.MapFeature] = {}
+def extract_map_features(map_features: typing.Iterable[map_pb2.MapFeature]) -> tuple[list[scenario.MapFeature], dict[int, int]]:
+    features = []
+    feature_ids = []
     for feature in map_features:
+        feature_id = feature.id
         match feature.WhichOneof('feature_data'):
             case 'lane':
-                ret[feature.id] = extract_lane_center(feature.lane)
+                feature_ids.append(feature_id)
+                features.append(extract_lane_center(feature.lane))
             case 'road_line':
-                ret[feature.id] = extract_line(feature.road_line)
+                feature_ids.append(feature_id)
+                features.append(extract_line(feature.road_line))
             case 'road_edge':
-                ret[feature.id] = extract_edge(feature.road_edge)
+                feature_ids.append(feature_id)
+                features.append(extract_edge(feature.road_edge))
             case 'stop_sign':
-                ret[feature.id] = extract_stop(feature.stop_sign)
+                feature_ids.append(feature_id)
+                features.append(extract_stop(feature.stop_sign))
             case 'crosswalk':
-                ret[feature.id] = extract_crosswalk(feature.crosswalk)
+                feature_ids.append(feature_id)
+                features.append(extract_crosswalk(feature.crosswalk))
             case 'speed_bump':
-                ret[feature.id] = extract_bump(feature.speed_bump)
+                feature_ids.append(feature_id)
+                features.append(extract_bump(feature.speed_bump))
             case 'driveway':
-                ret[feature.id] = extract_driveway(feature.driveway)
+                feature_ids.append(feature_id)
+                features.append(extract_driveway(feature.driveway))
     
-    return [v for _, v in sorted(ret.items(), key=lambda x: x[0])]
+    id_to_index = {id: i for i, id in enumerate(feature_ids)}
 
-def extract_dynamic_state(dynamic_state: typing.Iterable[scenario_pb2.DynamicMapState]) -> list[scenario.DynamicState]:
+    return features, id_to_index
+
+def extract_dynamic_state(
+        dynamic_state: typing.Iterable[scenario_pb2.DynamicMapState],
+        map_feature_id_to_map_feature_index: dict[int, int]
+) -> list[scenario.DynamicState]:
     track_length = len(list(dynamic_state))
     ret: dict[int, scenario.TrafficLight] = defaultdict(
         lambda: scenario.TrafficLight(
@@ -187,7 +201,7 @@ def extract_dynamic_state(dynamic_state: typing.Iterable[scenario_pb2.DynamicMap
     )
     for i, dynamic_map_state in enumerate(dynamic_state):
         for light_state in dynamic_map_state.lane_states:
-            ret[light_state.lane].lane = light_state.lane
+            ret[light_state.lane].lane = map_feature_id_to_map_feature_index[light_state.lane]
             ret[light_state.lane].states[i] = extract_traffic_signal_state(light_state.state)
             ret[light_state.lane].position = (
                 np.array([light_state.stop_point.x, light_state.stop_point.y], dtype=np.float32)
@@ -204,10 +218,12 @@ def extract_scenarios_file(file_path: str) -> list[scenario.Scenario]:
     return scenarios
 
 def extract_scenario(s: scenario_pb2.Scenario) -> scenario.Scenario:
+    map_features, map_feature_id_to_map_feature_index = extract_map_features(s.map_features)
+    
     return scenario.Scenario(
         scenario_id=s.scenario_id,
         ego_track_index=s.sdc_track_index,
         tracks=[extract_track(t) for t in s.tracks], 
-        map_features=extract_map_features(s.map_features),
-        dynamic_state=extract_dynamic_state(s.dynamic_map_states)
+        map_features=map_features,
+        dynamic_state=extract_dynamic_state(s.dynamic_map_states, map_feature_id_to_map_feature_index)
     )
